@@ -28,17 +28,12 @@ package_name = 'colorama'
 spec = importlib.util.find_spec(package_name)
 if spec is None:
 	print(package_name +" is not installed, installing now")
-	subprocess.check_call([sys.executable, '-m', 'pip3', 'install', package_name])
-package_name = 'selenium'
-spec = importlib.util.find_spec(package_name)
-if spec is None:
-	print(package_name +" is not installed, installing now")
-	subprocess.check_call([sys.executable, '-m', 'pip3', 'install', package_name])
+	os.system(f"pip3 install {package_name}")
 package_name = 'smbprotocol'
 spec = importlib.util.find_spec(package_name)
 if spec is None:
 	print(package_name +" is not installed, installing now")
-	subprocess.check_call([sys.executable, '-m', 'pip3', 'install', package_name])
+	os.system(f"pip3 install {package_name}")
 
 RED = Fore.RED
 YELLOW = Fore.YELLOW
@@ -62,7 +57,6 @@ parser.add_argument("-L", "--USERSFILE", action="store", help="Username File if 
 parser.add_argument("-n", "--NMAP", action="store_true", help="Run NMAP Instead of RustScan")
 parser.add_argument("-R", "--RUST", action="store_true", help="Run RustScan Instead of NMAP, this is much faster")
 parser.add_argument("-D", "--DOWNLOAD", action="store_true", help="Download Tools")
-parser.add_argument("-g", "--DontGiveUpEver", action="store_true", help="Dont ever give up")
 
 args = parser.parse_args()
 parser.parse_args(args=None if sys.argv[1:] else ['--help'])
@@ -77,7 +71,6 @@ PASSWORD = args.PASSWORD
 NMAP = args.NMAP
 RUST = args.RUST
 USERSFILE = args.USERSFILE
-DONT = args.DontGiveUpEver
 
 def DOWN():
 	content = ("/usr/bin/rustscan")
@@ -518,21 +511,6 @@ def BLOOD():
 		os.system(f"bloodhound-python -u '{USERNAME}' -p '{PASSWORD}' -ns {RHOST} -d {z} -c all")
 		os.system("cd ..")
 
-def DONT():
-	print(f"{CYAN}Remember the moment you know exactly where you're goin'")
-	print(f"{CYAN}'Cause the next moment before you know it")
-	print(f"{CYAN}Time is slowin' and it's frozen still")
-	print(f"{CYAN}And the windowsill looks really nice, right?")
-	print(f"{CYAN}You think twice about your life, it probably happens at night, right?")
-	print(f"{CYAN}Fight it, take the pain, ignite it")
-	print(f"{CYAN}Tie a noose around your mind, loose enough to breathe fine")
-	print(f"{CYAN}And tie it to a tree tell it, \"You belong to me\"")
-	print(f"{CYAN}This ain't a noose, this is a leash")
-	print(f"{CYAN}And I have news for you, you must obey me!{RESET}")	
-	quit()
-
-if DONT is not False:
-	DONT()
 if DOWNLOAD is not False:
 	DOWN()
 if RustScan is not False:
