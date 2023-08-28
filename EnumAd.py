@@ -8,8 +8,6 @@
 	#example python EnumADv2.py -r <RHOST> -n
 
 #Things to do:
-	#Add Support for usernames file
-	#Add more support for username and password	
 	#Add support for hashes file
 	#Add NTLMRELAYX support
 #The more information you feed the script the more it does (obviously)
