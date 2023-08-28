@@ -1,11 +1,13 @@
 #!/usr/bin/python3
 
-#To Download Files
+#To Download Tools
 	#python EnumADv2.py -D
 #To run with RustScan
 	#python EnumADv2.py -r <RHOST> -R 
 #To run with NMAP
 	#example python EnumADv2.py -r <RHOST> -n
+#To run with username and password
+	#python EnumADv2.py -r <RHOST> -R -u <username> -p <password> -d <domain name>
 
 #Things to do:
 	#Add support for hashes file
@@ -58,8 +60,6 @@ args = parser.parse_args()
 parser.parse_args(args=None if sys.argv[1:] else ['--help'])
 
 RHOST = args.RHOST
-LPORT = args.LPORT
-LHOST = args.LHOST
 DOMAIN = args.DOMAIN
 DOWNLOAD = args.DOWNLOAD
 USERNAME = args.USERNAME
