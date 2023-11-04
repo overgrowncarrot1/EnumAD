@@ -20,12 +20,12 @@ MAGENTA = Fore.MAGENTA
 BLUE = Fore.BLUE
 RESET = Fore.RESET
 
-parser = argparse.ArgumentParser(description="Crackmapexec", formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+parser = argparse.ArgumentParser(description="EnumAD", formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 parser.add_argument("-r", "--RHOST", action="store", help="RHOST, -r 10.10.10.1 ; ex: 10.10.10.0/24")
 parser.add_argument("-u", "--USERNAME", action="store", help="Username")
 parser.add_argument("-p", "--PASSWORD", action="store", help="Password")
 parser.add_argument("-I", "--IMPACKET", action="store_true", help="Run Impacket")
-parser.add_argument("-B", "--BLOOD", action="store_true", help="Run Crackmapexec")
+parser.add_argument("-B", "--BLOOD", action="store_true", help="Run BloodHound")
 args = parser.parse_args()
 parser.parse_args(args=None if sys.argv[1:] else ['--help'])
 
@@ -241,8 +241,17 @@ def CRACK1():
     with open("spn_pass.txt", "r") as f:
         content = f.read()
         print(f"{YELLOW}Cracked passwords if any are below{RESET}")
-        print(f"{RED}{content}")
+        print(f"{RED}{content}{RESET}")
     os.remove("a.txt")
+    path = "spn_hash.txt"
+    with open("spn_hash.txt", "r") as f:
+        s = Popen([f"cut -d '*' -f 2 spn_hash.txt > a.txt"], shell=True)
+        s.wait()
+        s = Popen([f"cut -d '/' -f 1 a.txt > spn_users.txt"], shell=True)
+        s.wait()
+        with open("spn_users.txt", "r") as f:
+            content = f.read()
+            print(content)        
 
 def RPC():
     with open("ports.txt", "r") as f:
@@ -300,6 +309,31 @@ def SMBANONCRACK():
     with open("smb_anon.txt", "r") as f:
         content = f.read()
         print(content)
+
+def RPCWUP():
+    with open("ports.txt", "r") as f:
+        content = f.read()
+        word = "135/tcp"
+        if word in content:
+            with open ("domain_name.txt", "r") as f:
+                content = f.read()
+            print(f"{YELLOW}Trying to login to RPC with {RED}{USERNAME}{YELLOW} with password {RED}{PASSWORD}{RESET}")
+            s = Popen([f"rpcclient -U {content}/{USERNAME}%{PASSWORD} {RHOST} -c 'enumdomusers' > rpc_users.txt"], shell=True)
+            s.wait()
+            with open("rpc_users.txt", "r") as f:
+                content = f.read()
+                print(f"{YELLOW}Trying to dump RPC_Users into rpc_users.txt{RESET}")
+                s = Popen([f"cut -d '[' -f 2 rpc_users.txt > a.txt"], shell=True)
+                s.wait()
+                s = Popen([f"cut -d ']' -f 1 a.txt > b.txt"], shell=True)
+                s.wait()
+                s = Popen([f"cat b.txt | sed 's/ //g' > rpc_users.txt"], shell=True)
+                s.wait()
+                os.remove("a.txt")
+                os.remove("b.txt")
+                with open("rpc_users.txt", "r"):
+                    content = f.read()
+                    print (content)
 
 def SMBWUP():
     with open("ports.txt", "r") as f:
@@ -444,6 +478,13 @@ if USERNAME is not False and PASSWORD is not False:
     SMBWUP()
     SPNWUP()
     SIDWUP()
+    RPCWUP()
+    path = "spn_hash.txt"
+    check_path = os.path.isfile(path)
+    if check_path == True:
+        check = input(f"\n{RED}Would you like to try and crack the hashes (y/n){RESET}\n")
+        if check == "y":
+            CRACK1()
 
 if BLOOD == True:
     print(f"{YELLOW}Running bloodhound as user {RED}{USERNAME}{YELLOW} with password {RED}{PASSWORD}{RESET}")
@@ -458,6 +499,8 @@ if BLOOD == True:
         content = f.read()
     s = Popen([f"bloodhound-python -d {content} -u {USERNAME} -p {PASSWORD} -c all -ns {RHOST}"], shell=True)
     s.wait()
+    path = ".."
+    os.chdir(path)
 
 if IMP == True:
     D()
