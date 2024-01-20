@@ -59,7 +59,7 @@ def D():
 
 def R():
     print(f"{YELLOW}Running Rustscan and saving to ports.txt{RESET}\n")
-    s = Popen([f"rustscan --ulimit 5000 -a {RHOST} -- -open -Pn > ports.txt"], shell=True)
+    s = Popen([f"rustscan --ulimit 5000 {RHOST} -- -Pn > ports.txt"], shell=True)
     s.wait()
     with open("ports.txt", "r") as f:
         content = f.read()
